@@ -15,11 +15,10 @@ import { logger } from "@app/utility";
 import { errorHandler, notFoundHandler } from "@app/middleware";
 import Api from "@app/controllers";
 import i18nTs from "@app/i18n/i18n";
-import en from "./i18n/en.json";
 import views from "koa-views";
 import { startCron } from "@app/background";
 import { AnalyticsService } from "@app/services/v1";
-import schema from "./schema"; // Import your GraphQL schema
+import schema from "./graphql"; // Import your GraphQL schema
 
 const server = (async () => {
   try {
@@ -58,20 +57,23 @@ const server = (async () => {
     // Mongodb
     await mongoose.connect(Config.DB_PATH);
 
-    //Background
+    // Background
     startCron();
 
     AnalyticsService.init();
+
+    // Mount GraphQL endpoint
     app.use(
       Mount(
         "/graphql",
         graphqlHTTP({
           schema: schema,
-          graphiql: true,
+          graphiql: true, // Enable GraphiQL interface
         })
       )
     );
 
+    // Mount REST API endpoint
     app.use(Mount("/api", Api));
 
     // Request url not found
@@ -86,7 +88,7 @@ const server = (async () => {
     logger.log("error", `Server startup failed: ${e.message}`);
   }
 
-  process.on("uncaughtException", function (error: any) {
+  process.on("uncaughtException", function (error) {
     console.log(error, "uncaught exception");
   });
 })();
